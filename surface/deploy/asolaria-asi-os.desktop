@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Asolaria ASI OS
+Comment=Asolaria ASI OS human front-end — opens full-screen at session start
+Exec=/opt/asolaria/asolaria-asi-os/deploy/start-asolaria-asi-os.sh
+Terminal=false
+X-GNOME-Autostart-enabled=true
+Categories=System;Utility;

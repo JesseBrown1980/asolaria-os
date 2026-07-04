@@ -1,0 +1,7 @@
+# The kernel's crypto deps (ed25519-dalek -> curve25519-dalek -> typenum) do NOT compile
+# on the newest rustc (1.95+); 1.81 is the tested toolchain. rustup reads this file and
+# uses 1.81 automatically for any cargo command in this workspace, so `cargo build` and
+# `scripts/build-img.sh` both "just work" — no manual +toolchain needed.
+[toolchain]
+channel = "1.81"
+targets = ["x86_64-unknown-uefi", "aarch64-unknown-uefi"]

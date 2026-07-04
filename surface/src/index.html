@@ -1,0 +1,127 @@
+<!doctype html><html lang=en translate=no><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>ASOLARIA ASI OS</title>
+<style>
+:root{--bg:#05070d;--pnl:#0b1120;--pnl2:#0e1626;--ln:#18233c;--ln2:#26344f;--cy:#43e8d8;--am:#ffb454;--vi:#a78bfa;--gn:#5ce0a0;--rd:#ff6b6b;--dim:#5c6c88;--tx:#cddaf2}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:radial-gradient(1100px 560px at 80% -12%,#12203c,rgba(5,7,13,0) 60%),var(--bg);color:var(--tx);font:13px/1.45 ui-monospace,"Cascadia Code",Consolas,monospace;font-variant-numeric:tabular-nums;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 18px;border-bottom:1px solid var(--ln);background:linear-gradient(90deg,#0a1424,#0a0f1c)}
+h1{margin:0;font-size:20px;letter-spacing:2px}h1 b{color:var(--cy)}h1 .os{color:var(--am)}
+.meta{color:var(--dim);font-size:11px;text-align:right;line-height:1.6}.meta b{color:var(--tx)}.meta .fire{color:var(--gn)}
+.wrap{flex:1;display:grid;grid-template-columns:300px 1fr;gap:14px;padding:14px;min-height:0}
+@media(max-width:760px){.wrap{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.col{min-height:0;display:flex;flex-direction:column;gap:12px}
+.sect{color:var(--dim);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin:2px 0}
+.tiles{display:flex;flex-direction:column;gap:10px;overflow:auto}
+.tile{background:var(--pnl);border:1px solid var(--ln);border-left:3px solid var(--ln2);border-radius:9px;padding:9px 12px}
+.tile.up{border-left-color:var(--gn)}.tile.down{border-left-color:var(--rd)}
+.tile .r1{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tile .nm{color:var(--tx);font-weight:600}.tile .nm small{color:var(--dim);font-weight:400}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--dim);box-shadow:0 0 8px transparent}
+.dot.up{background:var(--gn);box-shadow:0 0 9px var(--gn)}.dot.down{background:var(--rd);box-shadow:0 0 9px var(--rd)}
+.tile .sub{color:var(--dim);font-size:11px;margin-top:3px;word-break:break-all}
+.tile .sub b{color:var(--cy)}
+.term{flex:1;display:flex;flex-direction:column;min-height:0;background:var(--pnl);border:1px solid var(--ln);border-radius:10px;overflow:hidden}
+.tbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 10px;border-bottom:1px solid var(--ln);background:#0a0f1c}
+.btn{background:#111a2e;border:1px solid var(--ln2);color:var(--tx);border-radius:7px;padding:4px 10px;font:inherit;font-size:12px;cursor:pointer}
+.btn:hover{border-color:var(--cy);color:var(--cy)}
+.btn.am:hover{border-color:var(--am);color:var(--am)}.btn.rd:hover{border-color:var(--rd);color:var(--rd)}.btn.vi:hover{border-color:var(--vi);color:var(--vi)}
+.tabs{display:flex;gap:2px;padding:4px 8px 0;overflow-x:auto}
+.tab{background:#0a0f1c;border:1px solid var(--ln);border-bottom:none;border-radius:7px 7px 0 0;padding:4px 12px;color:var(--dim);cursor:pointer;white-space:nowrap;font-size:12px}
+.tab.active{color:var(--cy);border-color:var(--ln2);background:#000}
+.tab .x{color:var(--dim);margin-left:8px}.tab .x:hover{color:var(--rd)}
+.screen{flex:1;background:#000;overflow:auto;padding:10px 12px;white-space:pre-wrap;word-break:break-word;font-size:12.5px;color:#d6e2f5;min-height:0}
+.screen .none{color:var(--dim)}
+.inrow{display:flex;gap:8px;padding:8px 10px;border-top:1px solid var(--ln);background:#0a0f1c;align-items:center}
+.inrow .p{color:var(--gn)}
+.inrow input{flex:1;background:#000;border:1px solid var(--ln2);border-radius:7px;color:var(--tx);font:inherit;padding:6px 10px}
+.inrow input:focus{outline:none;border-color:var(--cy)}
+footer{color:var(--dim);font-size:10.5px;padding:7px 18px;border-top:1px solid var(--ln);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+footer .fire{color:var(--gn)}
+.hint{color:var(--dim);font-size:11px}
+</style></head><body>
+<header>
+ <h1>◢ <b>ASOLARIA</b> <span class=os>ASI OS</span></h1>
+ <div class=meta>
+  <div>seat <b>__ASOLARIA_SEAT__</b> · pid <b>__ASOLARIA_PID__</b></div>
+  <div><span id=clock>—</span> · kernel <b id=kver>—</b> · <span class=fire>fire=0</span></div>
+ </div>
+</header>
+<div class=wrap>
+ <div class=col>
+  <div class=sect>Live system (polling)</div>
+  <div class=tiles id=tiles><div class=hint>reading the live fabric…</div></div>
+ </div>
+ <div class=col>
+  <div class=term>
+   <div class=tbar>
+    <span class=sect style="margin:0 4px 0 0">Terminals</span>
+    <button class=btn onclick="spawn('cmd')">+ cmd</button>
+    <button class=btn onclick="spawn('powershell')">+ PowerShell</button>
+    <button class=btn onclick="spawn('bash')">+ WSL bash</button>
+    <span style="width:1px;height:16px;background:var(--ln2);margin:0 4px"></span>
+    <button class="btn am" title="run the Claude CLI in the active shell" onclick="send('claude\r\n')">claude</button>
+    <button class="btn am" title="run the Codex CLI in the active shell" onclick="send('codex\r\n')">codex</button>
+    <button class="btn" title="query the live kernel" onclick="send('curl -s http://127.0.0.1:5088/health.hbp\r\n')">kernel.hbp</button>
+    <span style="width:1px;height:16px;background:var(--ln2);margin:0 4px"></span>
+    <button class="btn vi" title="open a Windows environment as a window (Sandbox if available, else the host Windows desktop)" onclick="winLaunch()">🪟 Windows</button>
+    <span style="flex:1"></span>
+    <button class="btn rd" onclick="killActive()">kill</button>
+   </div>
+   <div class=tabs id=tabs></div>
+   <div class=screen id=screen><span class=none>No terminal open. Click <b>+ cmd</b> / <b>+ PowerShell</b> / <b>+ WSL bash</b> to open a real shell on the live system, then type — including <b>claude</b> and <b>codex</b>.</span></div>
+   <div class=inrow><span class=p>❯</span><input id=cmd placeholder="type into the active terminal — Enter to send (Shift+Enter = raw newline)" autocomplete=off spellcheck=false></div>
+  </div>
+ </div>
+</div>
+<footer>
+ <span>Asolaria ASI OS · pure <b>Rust std</b> front-end (0 external crates, 8-byte-host ethos) · :4600 · wired to your local Asolaria fabric</span>
+ <span class=fire>E=0 · nothing fires but what you type · process_launch on operator keystroke only</span>
+</footer>
+<script>
+const $=s=>document.querySelector(s), screenEl=$('#screen'), tabsEl=$('#tabs'), cmdEl=$('#cmd');
+const terms={}; let active=null;
+const dec=b=>{try{return new TextDecoder().decode(Uint8Array.from(atob(b),c=>c.charCodeAt(0)))}catch(e){return ''}};
+
+function tick(){ const d=new Date(); $('#clock').textContent=d.toTimeString().slice(0,8)+' '+d.toISOString().slice(0,10); }
+setInterval(tick,1000); tick();
+
+async function poll(){
+ try{
+  const t=await (await fetch('/api/live',{cache:'no-store'})).text();
+  const rows={}; t.trim().split('\n').forEach(l=>{const k=l.split('|')[0]; rows[k]=l;});
+  const kv=(rows.KERNEL||'').match(/version=([^|]*)/); $('#kver').textContent=kv?kv[1]:'—';
+  const def=[
+   ['KERNEL','host8 · 8-byte Rust kernel',':5088',x=>{const v=(x.match(/version=([^|]*)/)||[])[1]||''; const a=(x.match(/anchor=([^|]*)/)||[])[1]||''; return `version <b>${v}</b><br>${a}`;}],
+   ['RECALL','recall vault',':4796',_=>'your local inverted-index vault · <b>HILBRA</b>'],
+   ['BUS','behcs bus',':4947',x=>{const d=(x.match(/inbox_depth=([^|]*)/)||[])[1]||'-'; return `inbox depth <b>${d}</b>`;}],
+   ['FABRIC','super-dashboard',':4949',_=>'unified fabric · AgentTerms/EZProtect'],
+   ['SOVLINUX','sovereignty vault','local',_=>'your machine · <b>local vault</b>'],
+  ];
+  $('#tiles').innerHTML=def.map(([k,nm,port,sub])=>{
+   const row=rows[k]||''; const up=/\bup=1\b/.test(row)|| (k==='SOVLINUX');
+   return `<div class="tile ${up?'up':'down'}"><div class=r1><span class=nm>${nm} <small>${port}</small></span><span class="dot ${up?'up':'down'}"></span></div><div class=sub>${sub(row)}</div></div>`;
+  }).join('');
+ }catch(e){}
+}
+setInterval(poll,3000); poll();
+
+async function spawn(shell){
+ const id=await (await fetch('/term/spawn',{method:'POST',body:shell})).text();
+ terms[id]={id,label:shell,buf:''};
+ const es=new EventSource('/term/stream?id='+id);
+ es.onmessage=e=>{ terms[id].buf+=dec(e.data); if(active===id) render(); };
+ es.addEventListener('end',()=>{ terms[id].buf+='\n[session ended]\n'; if(active===id) render(); es.close(); });
+ terms[id].es=es;
+ renderTabs(); setActive(id); cmdEl.focus();
+}
+function renderTabs(){
+ tabsEl.innerHTML=Object.values(terms).map(t=>`<div class="tab ${active===t.id?'active':''}" onclick="setActive(${t.id})">${t.label}#${t.id}<span class=x onclick="event.stopPropagation();killTerm(${t.id})">✕</span></div>`).join('');
+}
+function setActive(id){ active=id; renderTabs(); render(); }
+function render(){ const t=terms[active]; if(!t){screenEl.innerHTML='<span class=none>No terminal open.</span>';return;} screenEl.textContent=t.buf; screenEl.scrollTop=screenEl.scrollHeight; }
+async function send(data){ if(!active) return; await fetch('/term/input?id='+active,{method:'POST',body:data}); }
+async function killTerm(id){ await fetch('/term/kill?id='+id,{method:'POST'}); if(terms[id]){terms[id].es&&terms[id].es.close(); delete terms[id];} if(active===id){active=Object.keys(terms)[0]?+Object.keys(terms)[0]:null;} renderTabs(); render(); }
+function killActive(){ if(active) killTerm(active); }
+async function winLaunch(){ try{ const r=await (await fetch('/win/launch',{method:'POST'})).text(); }catch(e){} }
+cmdEl.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); const v=cmdEl.value; cmdEl.value=''; send(v+'\r\n'); } });
+</script>
+</body></html>

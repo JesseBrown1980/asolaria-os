@@ -1,0 +1,15 @@
+[Unit]
+Description=Asolaria ASI OS — human front-end (pure Rust std, live-wired to the fabric)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Adjust to the install path on the bare Asolaria-on-metal OS.
+WorkingDirectory=/opt/asolaria/asolaria-asi-os
+ExecStart=/opt/asolaria/asolaria-asi-os/asolaria-asi-os-linux
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target

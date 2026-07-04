@@ -1,0 +1,20 @@
+[package]
+name = "asolaria-asi-os"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+license = "MIT OR Apache-2.0"
+authors = ["Asolaria Federation"]
+description = "Asolaria ASI OS — human front-end shell, pure Rust std (8-byte-host ethos), microsecond framework latency, wired to your local Asolaria fabric"
+repository = "https://github.com/JesseBrown1980/asolaria-asi-os"
+
+[[bin]]
+name = "asolaria-asi-os"
+path = "src/main.rs"
+
+# ZERO external dependencies — std only, so `cargo build` never touches the network.
+
+[profile.release]
+opt-level = 3
+lto = true
+panic = "abort"
