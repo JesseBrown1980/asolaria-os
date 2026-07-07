@@ -3,6 +3,10 @@
 
 mod init;
 
+use asolaria_kernel_core::boot_diag::{
+    render_status_line, BootObservations, FramebufferObservation, LoaderPathClass, PixelFormat,
+    SecureBootState,
+};
 use core::alloc::{GlobalAlloc, Layout};
 use core::panic::PanicInfo;
 use core::sync::atomic::{AtomicUsize, Ordering};
@@ -301,13 +305,28 @@ pub extern "efiapi" fn efi_main(
             b"  federation-1024   .   envelope-REPL init   .   E=0   .   fire=0\r\n\r\n",
         );
         // Own the display: locate GOP, take the framebuffer, and paint our own boot screen
-        // (so the monitor shows ASOLARIA ASI OS, not OVMF's TianoCore logo).
-        let st = &*system_table;
-        let bs = st.boot_services;
+        // (so the monitor shows ASOLARIA ASI OS, not OVMF's TianoCore logo). Also emit an
+        // HBP-ish early-boot diagnostic row before native drivers exist.
+        let mut boot_obs = BootObservations {
+            uefi_system_table_present: !system_table.is_null(),
+            con_out_present: !system_table.is_null() && !(*system_table).con_out.is_null(),
+            boot_services_present: !system_table.is_null()
+                && !(*system_table).boot_services.is_null(),
+            gop_located: false,
+            framebuffer: FramebufferObservation::ABSENT,
+            secure_boot: SecureBootState::Unknown,
+            loader_path: LoaderPathClass::Unknown,
+        };
+        let bs = if system_table.is_null() {
+            core::ptr::null_mut()
+        } else {
+            (*system_table).boot_services
+        };
         if !bs.is_null() {
             let mut gop_ptr: *mut core::ffi::c_void = core::ptr::null_mut();
             let status = ((*bs).locate_protocol)(&GOP_GUID, core::ptr::null_mut(), &mut gop_ptr);
             if status == 0 && !gop_ptr.is_null() {
+                boot_obs.gop_located = true;
                 let gop = gop_ptr as *mut GraphicsOutputProtocol;
                 let mode = (*gop).mode;
                 if !mode.is_null() && !(*mode).info.is_null() {
@@ -316,8 +335,34 @@ pub extern "efiapi" fn efi_main(
                     let h = (*info).vertical_resolution;
                     let pps = (*info).pixels_per_scan_line;
                     let fmt = (*info).pixel_format;
+                    let pixel_format = match fmt {
+                        0 => PixelFormat::Rgb,
+                        1 => PixelFormat::Bgr,
+                        2 => PixelFormat::Bitmask,
+                        3 => PixelFormat::BltOnly,
+                        _ => PixelFormat::Unknown,
+                    };
                     let fb = (*mode).framebuffer_base as *mut u32;
-                    if !fb.is_null() && w >= 320 && h >= 200 {
+                    let fb_size = (*mode).framebuffer_size;
+                    let min_framebuffer_bytes = (pps as usize)
+                        .saturating_mul(h as usize)
+                        .saturating_mul(core::mem::size_of::<u32>());
+                    let fb_base_present = !fb.is_null();
+                    let fb_layout_verified = pps >= w && fb_size >= min_framebuffer_bytes;
+                    boot_obs.framebuffer = FramebufferObservation::new(
+                        w,
+                        h,
+                        pixel_format,
+                        fb_size,
+                        fb_base_present,
+                        fb_layout_verified,
+                    );
+                    if fb_base_present
+                        && fb_layout_verified
+                        && pixel_format.is_direct_framebuffer()
+                        && w >= 320
+                        && h >= 200
+                    {
                         let bg = pack(fmt, 0x05, 0x07, 0x0D);
                         let cyan = pack(fmt, 0x43, 0xE8, 0xD8);
                         let amber = pack(fmt, 0xFF, 0xB4, 0x54);
@@ -337,6 +382,18 @@ pub extern "efiapi" fn efi_main(
                         fb_string(fb, pps, text, tx, ty, scale, cyan);
                     }
                 }
+            }
+        }
+        let mut diag_buf = [0u8; 384];
+        match render_status_line(&boot_obs, &mut diag_buf) {
+            Ok(diag_len) => {
+                serial_print(&diag_buf[..diag_len]);
+                serial_print(b"\r\n");
+                uefi_print(system_table, &diag_buf[..diag_len]);
+                uefi_print(system_table, b"\r\n");
+            }
+            Err(_) => {
+                serial_print(b"ASOBTDIAG|format=hbpish|evidence=MEASURED_BOOT|source=uefi|seat=unknown|receipt=unsealed|tuple=boot:diag:early|stage=render-buffer-too-small\r\n")
             }
         }
     }

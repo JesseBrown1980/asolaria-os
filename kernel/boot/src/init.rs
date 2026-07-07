@@ -23,6 +23,7 @@
 //!   "PIDA" → respond with PID anchor
 //!   other  → respond with "UNKN" + echo bytes[0..4]
 
+use asolaria_kernel_core::envelope::MIN_ENVELOPE_BYTES;
 use asolaria_kernel_core::syscall::{
     sys_cosign_append, sys_envelope_recv, sys_envelope_send, sys_exec, sys_exit, sys_hookwall_post,
     sys_hookwall_pre, sys_pid_current, HookwallVerdict, SyscallErr,
@@ -108,7 +109,11 @@ fn dispatch_envelope(type_prefix: &[u8; 4], full_env: &[u8], seq: &mut u64) {
             emit_envelope(b"PONG", seq, &[]);
         }
         b"EXEC" => {
-            handle_exec(&full_env[12..], seq);
+            if full_env.len() < 12 {
+                emit_envelope(b"EERR", seq, b"short-exec");
+            } else {
+                handle_exec(&full_env[12..], seq);
+            }
         }
         b"SHTD" => {
             // Graceful shutdown — emit FINI and exit.
@@ -175,6 +180,7 @@ fn emit_envelope(type_prefix: &[u8; 4], seq: &mut u64, payload: &[u8]) {
     buf[4..12].copy_from_slice(&seq.to_le_bytes());
     let n = core::cmp::min(payload.len(), INIT_ENVELOPE_MAX - 12);
     buf[12..12 + n].copy_from_slice(&payload[..n]);
-    let _ = sys_envelope_send(&buf[..12 + n], ROUTE_HINT_LOCAL);
+    let send_len = core::cmp::max(12 + n, MIN_ENVELOPE_BYTES);
+    let _ = sys_envelope_send(&buf[..send_len], ROUTE_HINT_LOCAL);
     *seq = seq.wrapping_add(1);
 }

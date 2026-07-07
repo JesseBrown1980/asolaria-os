@@ -54,6 +54,7 @@ pub mod vfs;
 // forward targets; rewire moves call sites one-by-one without breaking the kernel build.
 pub mod agent_runtime;
 pub mod atlas;
+pub mod boot_diag;
 pub mod bus_and_kick;
 pub mod bus_fabric;
 pub mod cosign_chain;
@@ -68,6 +69,9 @@ pub mod spawn_gate;
 pub mod tier;
 pub mod tier_gate;
 pub mod transit;
+
+#[cfg(test)]
+mod triple_runtime_parity;
 
 /// Kernel version string. Bumped on tier-2 cosign-approved ABI changes.
 pub const KERNEL_VERSION: &str = "0.2.0-phase3-scaffold";

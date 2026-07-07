@@ -241,9 +241,8 @@ mod tests {
         const VALID_ZERO: bool = is_valid_cp(0);
         const VALID_MAX: bool = is_valid_cp(BEHCS_1024_MAX_CP);
         const VALID_OOB: bool = is_valid_cp(BEHCS_1024_CP_COUNT);
-        assert!(VALID_ZERO);
-        assert!(VALID_MAX);
-        assert!(!VALID_OOB);
+        let observed = [VALID_ZERO, VALID_MAX, VALID_OOB];
+        assert_eq!(observed, [true, true, false]);
     }
 
     #[test]

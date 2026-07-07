@@ -2,7 +2,7 @@
 //!
 //! Pure Rust std, ZERO external crates (8-byte-host ethos, like host8-serve): a thread-per-connection
 //! TCP/HTTP server that (1) serves the ASI OS UI, (2) proxies your LOCAL Asolaria fabric so the UI shows the
-//! real running system (kernel :5088, recall-vault :4796, bus :4947, fabric :4949), and (3) runs real
+//! real running system (kernel :5088, recall-vault :4796, bus :4947, fabric :4949/:4944), and (3) runs real
 //! terminal sessions (cmd / PowerShell / WSL bash) — spawn via std::process, stream stdout/stderr over
 //! Server-Sent-Events, feed stdin over POST. Framework latency is microseconds; the CLIs (claude/codex)
 //! run as commands inside the shells. E=0: it launches only what the human types.
@@ -84,7 +84,12 @@ fn handle(mut stream: TcpStream) -> std::io::Result<()> {
             let html = INDEX_HTML
                 .replace("__ASOLARIA_SEAT__", &seat_name())
                 .replace("__ASOLARIA_PID__", &seat_pid());
-            write_resp(&mut stream, 200, "text/html; charset=utf-8", html.as_bytes())
+            write_resp(
+                &mut stream,
+                200,
+                "text/html; charset=utf-8",
+                html.as_bytes(),
+            )
         }
         ("GET", "/health") => write_resp(&mut stream, 200, "text/plain", b"ok"),
         ("GET", "/api/live") => {
@@ -151,7 +156,10 @@ fn launch_windows_env() -> String {
     if std::path::Path::new(sandbox).exists() && Command::new(sandbox).spawn().is_ok() {
         return "launched Windows Sandbox — a clean Windows env in its own window".into();
     }
-    match Command::new("explorer.exe").arg("shell:MyComputerFolder").spawn() {
+    match Command::new("explorer.exe")
+        .arg("shell:MyComputerFolder")
+        .spawn()
+    {
         Ok(_) => "launched Windows — host desktop / Explorer as a window".into(),
         Err(e) => format!("could not launch Windows env: {e}"),
     }
@@ -230,9 +238,9 @@ fn spawn_session(shell: &str) -> u64 {
             sessions().lock().unwrap().insert(id, sess);
         }
         Err(e) => {
-            out.lock()
-                .unwrap()
-                .extend_from_slice(format!("[asi-os] could not spawn '{shell}': {e}\r\n").as_bytes());
+            out.lock().unwrap().extend_from_slice(
+                format!("[asi-os] could not spawn '{shell}': {e}\r\n").as_bytes(),
+            );
             let sess = Arc::new(Session {
                 stdin: Mutex::new(None),
                 out,
@@ -332,7 +340,7 @@ fn base64(data: &[u8]) -> String {
     out
 }
 
-/// Read the LIVE local fabric surfaces and return a compact HBP-ish status block the UI renders.
+/// Probe local fabric surfaces and return a compact HBP-ish status block the UI renders.
 fn live_status() -> String {
     let kernel = http_get("127.0.0.1", 5088, "/health.hbp", 400).unwrap_or_default();
     let mut kver = "-".to_string();
@@ -361,25 +369,45 @@ fn live_status() -> String {
             inbox = n;
         }
     }
-    let fabric_up = http_get("127.0.0.1", 4949, "/health", 400).is_some();
+    let seat = seat_name();
+    let fabric_port = fabric_port_for_local(&seat);
+    let fabric_up = http_get("127.0.0.1", fabric_port, "/health", 400).is_some();
 
     format!(
         "ASIOSLIVE|ts_unix={}|seat={}\n\
          KERNEL|port=5088|up={}|version={}|anchor={}\n\
          RECALL|port=4796|up={}|role=local-inverted-index-vault\n\
          BUS|port=4947|up={}|inbox_depth={}\n\
-         FABRIC|port=4949|up={}|role=super-dashboard\n\
-         SOVLINUX|role=local-sovereignty-vault|present=local\n",
+         FABRIC|port={}|up={}|role=super-dashboard\n\
+         SOVLINUX|role=local-sovereignty-vault|present=unprobed|evidence=UNVERIFIED|gate=operator-witness\n",
         now_unix(),
-        seat_name(),
+        seat,
         b(kernel_up),
         kver,
         kanchor,
         b(recall_up),
         b(bus_up),
         inbox,
+        fabric_port,
         b(fabric_up),
     )
+}
+
+fn fabric_port_for_local(seat: &str) -> u16 {
+    let host = std::env::var("COMPUTERNAME")
+        .or_else(|_| std::env::var("HOSTNAME"))
+        .ok();
+    fabric_port_for_context(seat, host.as_deref())
+}
+
+fn fabric_port_for_context(seat: &str, host: Option<&str>) -> u16 {
+    let seat = seat.to_ascii_lowercase();
+    let host = host.unwrap_or("").to_ascii_lowercase();
+    if seat.contains("liris") || host.contains("ptsqtie") || host.contains("liris") {
+        4944
+    } else {
+        4949
+    }
 }
 
 fn b(v: bool) -> u8 {
@@ -402,19 +430,35 @@ fn seat_pid() -> String {
     read_ident("ASOLARIA_PID", "seat.pid", "unregistered")
 }
 fn read_ident(env_key: &str, file: &str, default: &str) -> String {
-    if let Ok(v) = std::env::var(env_key) {
+    let env_value = std::env::var(env_key).ok();
+    let home = std::env::var("HOME")
+        .or_else(|_| std::env::var("USERPROFILE"))
+        .ok();
+    resolve_ident(env_value, home, file, default, std::fs::read_to_string)
+}
+
+fn resolve_ident<F>(
+    env_value: Option<String>,
+    home: Option<String>,
+    file: &str,
+    default: &str,
+    read_file: F,
+) -> String
+where
+    F: FnOnce(String) -> std::io::Result<String>,
+{
+    if let Some(v) = env_value {
         if !v.trim().is_empty() {
             return v.trim().to_string();
         }
     }
-    let home = std::env::var("HOME")
-        .or_else(|_| std::env::var("USERPROFILE"))
-        .unwrap_or_default();
-    if !home.is_empty() {
-        if let Ok(s) = std::fs::read_to_string(format!("{home}/.asolaria/{file}")) {
-            let s = s.trim();
-            if !s.is_empty() {
-                return s.to_string();
+    if let Some(home) = home {
+        if !home.is_empty() {
+            if let Ok(s) = read_file(format!("{home}/.asolaria/{file}")) {
+                let s = s.trim();
+                if !s.is_empty() {
+                    return s.to_string();
+                }
             }
         }
     }
@@ -424,7 +468,8 @@ fn read_ident(env_key: &str, file: &str, default: &str) -> String {
 fn http_get(host: &str, port: u16, path: &str, timeout_ms: u64) -> Option<String> {
     let addr: std::net::SocketAddr = format!("{host}:{port}").parse().ok()?;
     let mut s = TcpStream::connect_timeout(&addr, Duration::from_millis(timeout_ms)).ok()?;
-    s.set_read_timeout(Some(Duration::from_millis(timeout_ms))).ok()?;
+    s.set_read_timeout(Some(Duration::from_millis(timeout_ms)))
+        .ok()?;
     let req = format!("GET {path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n");
     s.write_all(req.as_bytes()).ok()?;
     let mut buf = Vec::new();
@@ -439,8 +484,127 @@ fn http_get(host: &str, port: u16, path: &str, timeout_ms: u64) -> Option<String
         return None;
     }
     let resp = String::from_utf8_lossy(&buf).to_string();
-    Some(match resp.find("\r\n\r\n") {
-        Some(i) => resp[i + 4..].to_string(),
+    Some(http_response_body(&resp).to_string())
+}
+
+fn http_response_body(resp: &str) -> &str {
+    match resp.find("\r\n\r\n") {
+        Some(i) => &resp[i + 4..],
         None => resp,
-    })
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::cell::RefCell;
+
+    #[test]
+    fn base64_matches_standard_vectors() {
+        assert_eq!(base64(b""), "");
+        assert_eq!(base64(b"f"), "Zg==");
+        assert_eq!(base64(b"fo"), "Zm8=");
+        assert_eq!(base64(b"foo"), "Zm9v");
+        assert_eq!(base64(b"foobar"), "Zm9vYmFy");
+        assert_eq!(base64(&[0, 1, 2, 253, 254, 255]), "AAEC/f7/");
+    }
+
+    #[test]
+    fn query_id_returns_first_valid_id_or_zero() {
+        assert_eq!(query_id("id=42"), 42);
+        assert_eq!(query_id("x=1&id=7&y=2"), 7);
+        assert_eq!(query_id("id=4&id=9"), 4);
+        assert_eq!(query_id(""), 0);
+        assert_eq!(query_id("x=1"), 0);
+        assert_eq!(query_id("id=not-a-number"), 0);
+        assert_eq!(query_id("xid=5"), 0);
+    }
+
+    #[test]
+    fn identity_uses_trimmed_env_before_file() {
+        let calls = RefCell::new(Vec::<String>::new());
+        let value = resolve_ident(
+            Some("  SEAT-A  \n".to_string()),
+            Some("C:/home".to_string()),
+            "seat.name",
+            "DEFAULT",
+            |path| {
+                calls.borrow_mut().push(path);
+                Ok("SEAT-B".to_string())
+            },
+        );
+
+        assert_eq!(value, "SEAT-A");
+        assert!(calls.borrow().is_empty());
+    }
+
+    #[test]
+    fn identity_falls_back_to_trimmed_file_then_default() {
+        let path_seen = RefCell::new(String::new());
+        let from_file = resolve_ident(
+            Some("  \t".to_string()),
+            Some("C:/home".to_string()),
+            "seat.pid",
+            "DEFAULT",
+            |path| {
+                *path_seen.borrow_mut() = path;
+                Ok("\nPID-123\n".to_string())
+            },
+        );
+
+        assert_eq!(from_file, "PID-123");
+        assert_eq!(&*path_seen.borrow(), "C:/home/.asolaria/seat.pid");
+
+        let blank_file = resolve_ident(
+            None,
+            Some("C:/home".to_string()),
+            "seat.pid",
+            "DEFAULT",
+            |_| Ok(" \n".to_string()),
+        );
+        assert_eq!(blank_file, "DEFAULT");
+
+        let missing_file = resolve_ident(
+            None,
+            Some("C:/home".to_string()),
+            "seat.pid",
+            "DEFAULT",
+            |_| Err(std::io::Error::new(std::io::ErrorKind::NotFound, "missing")),
+        );
+        assert_eq!(missing_file, "DEFAULT");
+
+        let no_home = resolve_ident(None, None, "seat.pid", "DEFAULT", |_| {
+            panic!("file reader should not be called without a home")
+        });
+        assert_eq!(no_home, "DEFAULT");
+    }
+
+    #[test]
+    fn fabric_port_tracks_liris_vs_default_acer_surface() {
+        assert_eq!(fabric_port_for_context("liris-Codex", None), 4944);
+        assert_eq!(
+            fabric_port_for_context("ASOLARIA-NODE", Some("DESKTOP-PTSQTIE")),
+            4944
+        );
+        assert_eq!(
+            fabric_port_for_context("acer-Claude", Some("DESKTOP-J99VCNH")),
+            4949
+        );
+        assert_eq!(fabric_port_for_context("ASOLARIA-NODE", None), 4949);
+    }
+
+    #[test]
+    fn http_response_body_splits_after_first_header_boundary() {
+        assert_eq!(
+            http_response_body("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\nbody"),
+            "body"
+        );
+        assert_eq!(
+            http_response_body("body without headers"),
+            "body without headers"
+        );
+        assert_eq!(
+            http_response_body("HTTP/1.1 200 OK\r\n\r\nbody\r\n\r\ntrailer"),
+            "body\r\n\r\ntrailer"
+        );
+    }
 }

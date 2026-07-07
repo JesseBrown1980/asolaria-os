@@ -110,6 +110,12 @@ pub fn dispatch_dequeue(_buf: &mut [u8]) -> Result<usize, EnvelopeErr> {
 /// Sized to comfortably cover BEHCS-1024 envelope shells (~32–1024 bytes typical).
 pub const ENVELOPE_SLOT_BYTES: usize = 1024;
 
+/// Minimum bytes accepted by syscall-layer envelope send/exec.
+///
+/// Init responses shorter than this must be padded before dispatch, otherwise the
+/// syscall layer correctly rejects them as incomplete BEHCS-1024 envelope shells.
+pub const MIN_ENVELOPE_BYTES: usize = 32;
+
 // Single-slot SPSC byte queue, unsafe-free, no_std-safe.
 //
 // State machine on `SLOT_STATE`:
@@ -275,6 +281,11 @@ mod tests {
         assert_eq!(RouteHint::LOCAL.0, 0);
         assert_eq!(RouteHint::QUAD_BROADCAST.0, 1);
         assert_eq!(RouteHint::TRIAD_BROADCAST.0, 2);
+    }
+
+    #[test]
+    fn min_envelope_bytes_is_syscall_floor() {
+        assert_eq!(MIN_ENVELOPE_BYTES, 32);
     }
 
     #[test]

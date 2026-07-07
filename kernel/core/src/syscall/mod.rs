@@ -5,6 +5,7 @@
 //! All syscalls return `Result<T, SyscallErr>`. Stub bodies return `Err(SyscallErr::Unimplemented)`
 //! until phase-3+ wires real handlers.
 
+use crate::envelope::MIN_ENVELOPE_BYTES;
 use core::result::Result;
 
 /// Canonical syscall error type. Envelopes serialize errors via `payload.err` per IX-700.
@@ -121,8 +122,6 @@ pub fn sys_write(fd: Handle, buf: &[u8]) -> Result<usize, SyscallErr> {
 /// 0 reserved as "no handle"). Errors mapped at the syscall boundary:
 /// `QueueFull` → `Exhausted`, `PayloadOversize` → `Invalid`, others → `Invalid`.
 pub fn sys_exec(envelope_bytes: &[u8]) -> Result<Handle, SyscallErr> {
-    /// Lower bound: minimal envelope JSON shell needs at least this many bytes.
-    const MIN_ENVELOPE_BYTES: usize = 32;
     if envelope_bytes.len() < MIN_ENVELOPE_BYTES {
         return Err(SyscallErr::Invalid);
     }
@@ -240,8 +239,6 @@ pub fn sys_pid_current() -> Result<Handle, SyscallErr> {
 /// `QueueFull` → `Exhausted`, `PayloadOversize` → `Invalid`, all other dispatch errors
 /// → `Invalid`. Promotes the syscall from Unimplemented to a real round-trippable wire.
 pub fn sys_envelope_send(env: &[u8], route_hint: u32) -> Result<(), SyscallErr> {
-    /// Lower bound: matches sys_exec — minimal BEHCS-1024 envelope shell.
-    const MIN_ENVELOPE_BYTES: usize = 32;
     if env.len() < MIN_ENVELOPE_BYTES {
         return Err(SyscallErr::Invalid);
     }
@@ -596,8 +593,18 @@ mod tests {
     #[test]
     fn sys_envelope_send_rejects_undersized_envelope() {
         // Phase-3 v0.1.12: same MIN_ENVELOPE_BYTES (32) as sys_exec.
+        let short = [0u8; crate::envelope::MIN_ENVELOPE_BYTES - 1];
         assert_eq!(sys_envelope_send(b"too short", 0), Err(SyscallErr::Invalid));
+        assert_eq!(sys_envelope_send(&short, 0), Err(SyscallErr::Invalid));
         assert_eq!(sys_envelope_send(&[], 0), Err(SyscallErr::Invalid));
+    }
+
+    #[test]
+    fn sys_envelope_send_accepts_minimum_sized_envelope() {
+        crate::envelope::reset_slot_for_tests();
+        let env = [0x41u8; crate::envelope::MIN_ENVELOPE_BYTES];
+        assert_eq!(sys_envelope_send(&env, 0), Ok(()));
+        crate::envelope::reset_slot_for_tests();
     }
 
     #[test]
