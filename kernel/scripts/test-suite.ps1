@@ -184,7 +184,9 @@ function Invoke-QemuSmoke {
         "-monitor", "none",
         "-no-reboot",
         "-drive", "if=pflash,format=raw,readonly=on,file=$ovmfCode",
-        "-drive", "format=raw,file=fat:ro:$QemuFatRoot"
+        # OVMF may touch the boot volume during startup. This is a temporary
+        # local FAT directory under kernel/dist, never an ESP or USB device.
+        "-drive", "format=raw,file=fat:rw:$QemuFatRoot"
     )
 
     Write-Host ""
