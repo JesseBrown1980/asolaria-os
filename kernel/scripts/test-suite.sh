@@ -172,6 +172,7 @@ run_qemu_smoke() {
 
     echo
     echo "[run] qemu-system-x86_64 smoke timeout=${QEMU_TIMEOUT_SECONDS}s"
+    # OVMF may touch the boot volume during startup. This is a temporary local FAT directory under kernel/dist.
     timeout "${QEMU_TIMEOUT_SECONDS}s" \
         qemu-system-x86_64 \
             -machine q35 \
@@ -181,7 +182,7 @@ run_qemu_smoke() {
             -monitor none \
             -no-reboot \
             -drive if=pflash,format=raw,readonly=on,file="${ovmf_code}" \
-            -drive format=raw,file=fat:ro:"${QEMU_FAT_ROOT}"
+            -drive format=raw,file=fat:rw:"${QEMU_FAT_ROOT}"
     local exit_code=$?
 
     case "${exit_code}" in
