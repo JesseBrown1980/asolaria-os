@@ -55,6 +55,7 @@ pub mod vfs;
 pub mod agent_runtime;
 pub mod atlas;
 pub mod boot_diag;
+pub mod boot_identity;
 pub mod bus_and_kick;
 pub mod bus_fabric;
 pub mod cosign_chain;
