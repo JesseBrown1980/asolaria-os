@@ -7,6 +7,7 @@ use asolaria_kernel_core::boot_diag::{
     render_status_line, BootObservations, FramebufferObservation, LoaderPathClass, PixelFormat,
     SecureBootState,
 };
+use asolaria_kernel_core::boot_identity::{render_boot_identity_line, ACER_FABLE5_BOOT_IDENTITY};
 use core::alloc::{GlobalAlloc, Layout};
 use core::panic::PanicInfo;
 use core::sync::atomic::{AtomicUsize, Ordering};
@@ -233,7 +234,7 @@ unsafe fn uefi_print(st: *mut EfiSystemTable, msg: &[u8]) {
         return;
     }
     let con_out = (*st).con_out;
-    let mut buf = [0u16; 128];
+    let mut buf = [0u16; 1024];
     let mut i = 0;
     while i < msg.len() && i < buf.len() - 1 {
         buf[i] = msg[i] as u16;
@@ -279,7 +280,7 @@ unsafe fn serial_print(msg: &[u8]) {
 /// UEFI application entry point. The `x86_64-unknown-uefi` target links against the `efi_main`
 /// symbol (`/entry:efi_main /subsystem:efi_application`); firmware calls it with the image handle
 /// + system table. We print the boot banner via ConOut, bring up the heap, and hand off to the
-/// kernel init (envelope-REPL), which diverges.
+///   kernel init (envelope-REPL), which diverges.
 ///
 /// HONEST next step (`frame_alloc` v0.2): the heap is a fixed 16 KiB static `BumpAllocator`. A
 /// production boot walks the UEFI memory map (`system_table` → `BootServices::GetMemoryMap`) to
@@ -394,6 +395,20 @@ pub extern "efiapi" fn efi_main(
             }
             Err(_) => {
                 serial_print(b"ASOBTDIAG|format=hbpish|evidence=MEASURED_BOOT|source=uefi|seat=unknown|receipt=unsealed|tuple=boot:diag:early|stage=render-buffer-too-small\r\n")
+            }
+        }
+        let mut identity_buf = [0u8; 1024];
+        match render_boot_identity_line(&ACER_FABLE5_BOOT_IDENTITY, &mut identity_buf) {
+            Ok(identity_len) => {
+                serial_print(&identity_buf[..identity_len]);
+                serial_print(b"\r\n");
+                uefi_print(system_table, &identity_buf[..identity_len]);
+                uefi_print(system_table, b"\r\n");
+            }
+            Err(_) => {
+                serial_print(
+                    b"ASOBTID|format=hbpish|evidence=BUILD_TIME_DEVICE_CONTEXT|source=uefi|json=0|stage=render-buffer-too-small\r\n",
+                )
             }
         }
     }
