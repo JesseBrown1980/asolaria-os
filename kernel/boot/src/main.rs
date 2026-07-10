@@ -1,13 +1,17 @@
 #![no_std]
 #![no_main]
 
+mod bootproj;
+mod driver_ahci;
+mod driver_rst_vmd;
+mod hwinv;
 mod init;
+mod rtc;
 
 use asolaria_kernel_core::boot_diag::{
     render_status_line, BootObservations, FramebufferObservation, LoaderPathClass, PixelFormat,
     SecureBootState,
 };
-use asolaria_kernel_core::boot_identity::{render_boot_identity_line, ACER_FABLE5_BOOT_IDENTITY};
 use core::alloc::{GlobalAlloc, Layout};
 use core::panic::PanicInfo;
 use core::sync::atomic::{AtomicUsize, Ordering};
@@ -250,6 +254,13 @@ unsafe fn uefi_print(st: *mut EfiSystemTable, msg: &[u8]) {
 // headless/debug lane. Together they cover both "on a monitor" and "over a cable".
 const COM1: u16 = 0x3F8;
 
+// Build-seat selector for this machine-specific kernel artifact. TRILATERAL BUILD: the SAME OS
+// source + shared driver set builds a device/PID/fabric-specific kernel per machine (acer / liris
+// / <third>); the seat label is chosen at build time via `ASOLARIA_SEAT` (default "liris"), which
+// `build.rs` bakes into `BOOT_SEAT` + `BOOT_SEAT_ROW` below. Device identity itself is NOT
+// hard-coded: it is minted at boot from the read-only PCI inventory + RTC/TSC into a per-boot PID.
+include!(concat!(env!("OUT_DIR"), "/seat_config.rs"));
+
 unsafe fn outb(port: u16, val: u8) {
     core::arch::asm!("out dx, al", in("dx") port, in("al") val, options(nomem, nostack, preserves_flags));
 }
@@ -397,20 +408,19 @@ pub extern "efiapi" fn efi_main(
                 serial_print(b"ASOBTDIAG|format=hbpish|evidence=MEASURED_BOOT|source=uefi|seat=unknown|receipt=unsealed|tuple=boot:diag:early|stage=render-buffer-too-small\r\n")
             }
         }
-        let mut identity_buf = [0u8; 1024];
-        match render_boot_identity_line(&ACER_FABLE5_BOOT_IDENTITY, &mut identity_buf) {
-            Ok(identity_len) => {
-                serial_print(&identity_buf[..identity_len]);
-                serial_print(b"\r\n");
-                uefi_print(system_table, &identity_buf[..identity_len]);
-                uefi_print(system_table, b"\r\n");
-            }
-            Err(_) => {
-                serial_print(
-                    b"ASOBTID|format=hbpish|evidence=BUILD_TIME_DEVICE_CONTEXT|source=uefi|json=0|stage=render-buffer-too-small\r\n",
-                )
-            }
-        }
+        serial_print(BOOT_SEAT_ROW);
+        serial_print(b"\r\n");
+        uefi_print(system_table, BOOT_SEAT_ROW);
+        uefi_print(system_table, b"\r\n");
+
+        // Machine-specific identity chain. These operations are read-only with respect to
+        // device/storage state: PCI config-data reads, CMOS RTC reads, and RDTSC. They emit
+        // unsealed E=0 HBP-ish rows; no live fabric registration or process launch occurs.
+        let hw = hwinv::pci_scan(BOOT_SEAT);
+        let boot_time = rtc::read_boot_time();
+        let boot_pid = bootproj::emit(&hw.device_digest, &boot_time);
+        driver_rst_vmd::probe(&hw, &boot_pid, &boot_time, BOOT_SEAT);
+        driver_ahci::probe(&hw, &boot_pid, &boot_time, BOOT_SEAT);
     }
     let _anchor = asolaria_kernel_core::FEDERATION_ANCHOR_PID;
     unsafe {

@@ -28,3 +28,49 @@ jobs:
           cd kernel
           export CARGO_BUILD_JOBS=1
           bash ./scripts/test-suite.sh
+
+  # Trilateral build: ONE shared OS source + ONE shared driver set produce a device/PID/fabric-
+  # specific kernel per federation machine. The seat label is the only build-time parameter
+  # (ASOLARIA_SEAT, baked by kernel/boot/build.rs); device_pid is minted at boot from live PCI +
+  # RTC/TSC. Each machine flashes its own artifact. Later this list is auto-generated per new node.
+  #
+  # x86 seats: acer + liris (Intel RST/VMD 8086:282A storage) and relic (HP 1000, SATA AHCI
+  # 8086:1E03 — no 282A). The shared driver set carries BOTH storage paths; each boot selects the
+  # applicable one from live PCI. (felipe is the Galaxy A06 ARM64 node, not an x86 seat.)
+  trilateral-build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        seat: [acer, liris, relic]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust 1.81 kernel toolchain
+        run: |
+          rustup toolchain install 1.81 --profile minimal --target x86_64-unknown-uefi
+          cd kernel && rustc --version
+      - name: Build ${{ matrix.seat }} kernel from the shared source
+        run: |
+          cd kernel
+          export CARGO_BUILD_JOBS=1
+          ASOLARIA_SEAT=${{ matrix.seat }} cargo build --release --target x86_64-unknown-uefi --bin asolaria-os
+          mkdir -p dist
+          cp target/x86_64-unknown-uefi/release/asolaria-os.efi dist/asolaria-os-${{ matrix.seat }}.efi
+      - name: Verify seat marker + shared device path (no cross-seat leak)
+        run: |
+          cd kernel
+          EFI=dist/asolaria-os-${{ matrix.seat }}.efi
+          strings -a "$EFI" | grep -Fq "|seat=${{ matrix.seat }}|device_identity=runtime-pci-60d" \
+            || { echo "FAIL: ${{ matrix.seat }} EFI missing its own seat marker + shared device path"; exit 1; }
+          for other in acer liris felipe; do
+            if [ "$other" != "${{ matrix.seat }}" ]; then
+              strings -a "$EFI" | grep -Fq "evidence=BUILD_TIME_SEAT_CONTEXT|source=uefi|seat=$other|" \
+                && { echo "FAIL: cross-seat leak — $other marker in ${{ matrix.seat }} EFI"; exit 1; }
+            fi
+          done
+          echo "OK: seat=${{ matrix.seat }} · shared device path · no cross-seat leak"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: asolaria-os-${{ matrix.seat }}-efi
+          path: kernel/dist/asolaria-os-${{ matrix.seat }}.efi
+          if-no-files-found: error

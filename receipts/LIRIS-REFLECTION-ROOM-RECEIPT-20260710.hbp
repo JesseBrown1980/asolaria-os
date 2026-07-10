@@ -1,0 +1,8 @@
+LIRISREFLECTHDR|schema=ASOLARIA-REFLECTION-ROOM-V1|seat=liris|measured_at=2026-07-10T13:02:56-03:00|json=0
+LIRISREFLECTSOURCE|repo=JesseBrown1980/asolaria-os|base_commit=393e10a47726abcd6be4be92373df88aedb1ddac|branch=liris/prewindows-metal-20260710|module=kernel/core/src/reflection_room/mod.rs|authority=LIRIS_LOCAL_BUILD|json=0
+LIRISREFLECTCONTRACT|single_writer=1|prepare_then_commit=1|partial_reads=0|full_sha256_identity=1|short_handle_route_only=1|parent_committed=1|idempotent=1|selector_dims_min=60|json=0
+LIRISREFLECTGULP|active_window=2000|waves_per_checkpoint=5|checkpoint_messages=10000|checkpoints_per_supergulp=5|supergulp_messages=50000|product_required_before_release=1|json=0
+LIRISREFLECTACCESS|fabric_tiers=6|recall_projection=0,5,9|pii_precedence=1|l0_pii=DENY|l5_pii=DENY|l9_owner_pid_required=1|json=0
+LIRISREFLECTGATE|focused_tests_passed=11|core_tests_passed=306|core_tests_ignored=1|parity_tests_passed=6|fmt=PASS|clippy_core=PASS|clippy_uefi=PASS|json=0
+LIRISREFLECTPROVENANCE|historical_2k_50k=OPERATOR_OBSERVED_ACER_OR_FABRIC_OWNED|current_acer_recall=OPERATOR_OBSERVED_ACER_MEASURED_SCREEN|acer_recall_rows=591949|acer_recall_terms=2621239|acer_recall_postings=23976691|acer_recall_skipped=0|json=0
+LIRISREFLECTBOUNDARY|disk_persistence=UNIMPLEMENTED|model_execution=UNIMPLEMENTED|live_fabric_registration=0|historical_pipeline_replacement=0|qemu=UNVERIFIED|bare_metal=UNVERIFIED|publication=HOLD|json=0

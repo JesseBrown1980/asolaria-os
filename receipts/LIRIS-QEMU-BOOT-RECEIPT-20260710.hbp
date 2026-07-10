@@ -1,0 +1,8 @@
+LIRISQEMUBOOTHDR|schema=ASOLARIA-LIRIS-QEMU-BOOT-V1|seat=liris|measured_at=2026-07-10T16:50:55Z|json=0
+LIRISQEMUBOOTBASE|repo=JesseBrown1980/asolaria-os|base_commit=393e10a47726abcd6be4be92373df88aedb1ddac|branch=liris/prewindows-metal-20260710|toolchain=rustc-1.81.0|target=x86_64-unknown-uefi|json=0
+LIRISQEMUBOOTARTIFACT|artifact=kernel/dist/asolaria-os-x86_64.efi|bytes=24576|sha256=29820d7c3f5cde5ac4a2a22f2eeecc4868f433a6fab1db85cdc17024880ce17e|sha16=29820d7c3f5cde5a|matches=LIRIS-PREWINDOWS-BOOT-RECEIPT-20260710|json=0
+LIRISQEMUBOOTRUN|host=liris-wsl2-ubuntu-24.04|qemu=qemu-system-x86_64|machine=q35|mem=512M|accel=tcg|firmware=/usr/share/OVMF/OVMF_CODE_4M.fd|esp_layout=EFI/BOOT/BOOTX64.EFI|serial=com1-to-file|timeout_s=40|qemu_exit=124-timeout-kernel-still-running|json=0
+LIRISQEMUBOOTROWS|banner=ASOLARIA-ASI-OS-kernel-0.2.0-phase3-scaffold|asobtdiag=MEASURED_BOOT-fb-1280x800-bgr|asobtid_seat=liris|hwinv_pci_devices=6|bootpid_device_pid=d0162de451e51b30|coord_prefix=979.310.131.995.978.505|boottime_utc=2026-07-10T16:49:12Z|bootproj_boot_pid=22812a4d634ab2f6|bootdriver=intel-rst-vmd-NOT_APPLICABLE-no-8086:282A-in-qemu|rst_vmd=0|storage=1|writes=0|e=0|fire=0|json=0
+LIRISQEMUBOOTLOG|file=receipts/LIRIS-QEMU-BOOT-SERIAL-20260710.log|bytes=2505|sha256=e59b9d62f800184fe74afde97f77fbc7a0705c1c08e22ddea35fa7ce9584e36a|json=0
+LIRISQEMUBOOTVERDICT|qemu_boot=MEASURED_LIRIS_WSL2_QEMU_OVMF|closes_boundary=LIRIS-PREWINDOWS-BOOT-RECEIPT-20260710:qemu_boot=UNVERIFIED_SKIPPED_NO_QEMU_BINARY|first_execution_of=hwinv+rtc+bootproj+driver_rst_vmd|json=0
+LIRISQEMUBOOTBOUNDARY|bare_metal_boot=UNVERIFIED|vmd_nvme_driver=SCAFFOLD_GATE_ONLY|windows_guest=DESIGN|fabric_registration=0|artifact_publication=HOLD|commit=UNCOMMITTED_WIP|json=0

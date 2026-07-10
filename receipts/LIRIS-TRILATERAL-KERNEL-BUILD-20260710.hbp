@@ -1,0 +1,11 @@
+TRILATERALHDR|schema=ASOLARIA-TRILATERAL-KERNEL-BUILD-V3|seat=liris|measured_at=2026-07-10T19:03:00Z|kind=one-os-shared-drivers-three-x86-kernels-REPRODUCIBLE|supersedes=V2|json=0
+TRILATERALBASE|repo=JesseBrown1980/asolaria-os|branch=liris/prewindows-metal-20260710|base_commit=393e10a47726|toolchain=rustc-1.81.0|target=x86_64-unknown-uefi|json=0
+TRILATERALTOPOLOGY|acer=OP-JESSE-computer(coffee-lake-HM370-8086:282A)|liris=OP-RAYSSA-computer(ice-lake-8086:282A)|relic=OP-FELIPE-computer(hp-1000-i3-3110M-8086:1E03-AHCI)|felipe=HUMAN-OP-not-a-seat|aether=OP-FELIPE-phone-galaxy-a06-arm64|falcon=OP-JESSE-phone-samsung-s24fe|x86_matrix=[acer,liris,relic]|json=0
+TRILATERALMECH|seat_param=ASOLARIA_SEAT(build.rs->seat_config.rs include)|default=liris|validation=[a-z0-9-]{1,32}|drivers=rst_vmd(282A acer/liris)+ahci(class01:06 relic)runtime-gated|both-ship-in-shared-kernel|json=0
+TRILATERALREPRO|config=kernel/.cargo/config.toml|flags=/DEBUG:NONE+/Brepro+remap-path-prefix|root_cause_fixed=lld-link-codeview-build-id(RSDS-GUID+debug-dir-timestamps 20 bytes)|verified=liris-3x-identical+acer-2x+relic-2x+seats-distinct|json=0
+TRILATERALSEAT|seat=liris|sha256=14eebc1a8631e41cde2e2fbd767d4d7175bc2de781440592810a521c52ef56de|reproducible=YES|json=0
+TRILATERALSEAT|seat=acer|sha256=4f4362766183342c792ced6b42a1d6a35de189cd9ea102be17f0011d07fda845|reproducible=YES|json=0
+TRILATERALSEAT|seat=relic|sha256=6774e14be493cbca070c0c17faeace6e0601c3be0f8ef98f066b6fae64c30471|reproducible=YES|json=0
+TRILATERALPROOF|liris_qemu_boot=PASS|bootpid=rst_vmd=0-ahci=1-storage=1|bootdriver_rst=NOT_APPLICABLE|bootdriver_ahci=GATED_MATCH|markers_survive_DEBUG:NONE=YES|forbidden_markers_absent=YES|json=0
+TRILATERALCI|file=.github/workflows/kernel-gate.yml|job=trilateral-build|matrix=[acer,liris,relic]|verifies=own-seat-marker+shared-device-path+no-cross-seat-leak|artifacts=asolaria-os-<seat>-efi|json=0
+TRILATERALBOUNDARY|metal_device_pid=UNVERIFIED(qemu-emulated;needs-metal-boot)|bare_metal_boot=UNVERIFIED|storage_bringup=SCAFFOLD(rst_vmd+ahci gate-only TODO)|cross_machine_hash_parity=expected-under-CI-fixed-path(acer/relic remeasure their own)|fire=0|e=0|json=0

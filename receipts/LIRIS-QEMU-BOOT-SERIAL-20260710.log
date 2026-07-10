@@ -1,0 +1,26 @@
+[2J[01;01H[=3h[2J[01;01H[2J[01;01H[=3h[2J[01;01H[2J[01;01H[=3h[2J[01;01HBdsDxe: loading Boot0001 "UEFI QEMU HARDDISK QM00001 " from PciRoot(0x0)/Pci(0x1F,0x2)/Sata(0x0,0xFFFF,0x0)
+BdsDxe: starting Boot0001 "UEFI QEMU HARDDISK QM00001 " from PciRoot(0x0)/Pci(0x1F,0x2)/Sata(0x0,0xFFFF,0x0)
+
+  ASOLARIA ASI OS   .   kernel 0.2.0-phase3-scaffold   .   booting
+  federation-1024   .   envelope-REPL init   .   E=0   .   fire=0
+
+
+  ASOLARIA ASI OS   .   kernel 0.2.0-phase3-scaffold   .   booting
+  federation-1024   .   envelope-REPL init   .   E=0   .   fire=0
+
+ASOBTDIAG|format=hbpish|evidence=MEASURED_BOOT|source=uefi|seat=unknown|receipt=unsealed|tuple=boot:diag:early|stage=framebuffer|uefi=1|conout=1|bs=1|gop=1|fb=1280x800/bgr/4096000|fbbase=1|fblayout=1|sb=unknown|loader=unknown
+ASOBTDIAG|format=hbpish|evidence=MEASURED_BOOT|source=uefi|seat=unknown|receipt=unsealed|tuple=boot:diag:early|stage=framebuffer|uefi=1|conout=1|bs=1|gop=1|fb=1280x800/bgr/4096000|fbbase=1|fblayout=1|sb=unknown|loader=unknown
+ASOBTID|format=hbpish|evidence=BUILD_TIME_SEAT_CONTEXT|source=uefi|seat=liris|device_identity=runtime-pci-60d|boot_identity=runtime-rtc-tsc|authority=unsealed|e=0|fire=0|json=0
+ASOBTID|format=hbpish|evidence=BUILD_TIME_SEAT_CONTEXT|source=uefi|seat=liris|device_identity=runtime-pci-60d|boot_identity=runtime-rtc-tsc|authority=unsealed|e=0|fire=0|json=0
+  hwinv . PCI enumeration (0xCF8/0xCFC, read-only)
+  PCI 00:00.0  8086:29c0 class=06:00
+  PCI 00:01.0  1234:1111 class=03:00
+  PCI 00:02.0  8086:10d3 class=02:00
+  PCI 00:1f.0  8086:2918 class=06:01
+  PCI 00:1f.2  8086:2922 class=01:06
+  PCI 00:1f.3  8086:2930 class=0c:05
+  hwinv . PCI scan complete
+  BOOTPID|device_pid=d0162de451e51b30|device_pid_full=d0162de451e51b30057822213aa3187125480e0f30e4b2f69c2c9ac14ba8b4e9|hw_tuple_pid_full=22063f895e14fa5f39f98ce10ce24bfe62c43a66f40a7ec9b20aa2058bbf06a9|hw_devices=6|rst_vmd=0|storage=1|seat=liris|colony=liris|behcs=1024|dims=60|derived_from=60d_coordinate|coord_prefix=979.310.131.995.978.505|e=0|fire=0|json=0
+  BOOTTIME|utc=2026-07-10T16:49:12Z|tsc=5964577239|src=cmos_rtc+tsc|e=0|json=0
+  BOOTPROJ|boot_pid=22812a4d634ab2f6|device_pid=d0162de451e51b30|utc=2026-07-10T16:49:12Z|volatile=1|stable_ref=device_pid|e=0|fire=0|json=0
+  BOOTDRIVER|driver=intel-rst-vmd|match=8086:282A|device_pid=d0162de451e51b30|boot_pid=22812a4d634ab2f6|utc=2026-07-10T16:49:12Z|seat=liris|status=NOT_APPLICABLE|no_8086:282A_on_this_device|writes=0|e=0|fire=0|json=0

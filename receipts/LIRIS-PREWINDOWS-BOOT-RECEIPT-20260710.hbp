@@ -1,0 +1,6 @@
+LIRISBOOTRECEIPTHDR|schema=ASOLARIA-LIRIS-PREWINDOWS-BOOT-V1|seat=liris|measured_at=2026-07-10T13:02:56-03:00|json=0
+LIRISBOOTBASE|repo=JesseBrown1980/asolaria-os|base_commit=393e10a47726abcd6be4be92373df88aedb1ddac|branch=liris/prewindows-metal-20260710|toolchain=rustc-1.81.0|target=x86_64-unknown-uefi|json=0
+LIRISBOOTARTIFACT|artifact=kernel/dist/asolaria-os-x86_64.efi|bytes=24576|sha256=29820d7c3f5cde5ac4a2a22f2eeecc4868f433a6fab1db85cdc17024880ce17e|sha16=29820d7c3f5cde5a|authority=LIRIS_LOCAL_BUILD|json=0
+LIRISBOOTIDENTITY|seat=liris|device_pid_source=pci-readonly+60d-coordinate|boot_pid_source=device-pid+rtc+tsc|rst_vmd=probe-only|writes=0|e=0|fire=0|authority=unsealed|json=0
+LIRISBOOTGATE|fmt=PASS|core_tests_passed=306|core_tests_ignored=1|parity_tests_passed=6|clippy_core=PASS|clippy_uefi=PASS|required_markers_present=6|forbidden_cross_seat_markers_absent=2|json=0
+LIRISBOOTBOUNDARY|qemu_boot=UNVERIFIED_SKIPPED_NO_QEMU_BINARY|bare_metal_boot=UNVERIFIED|vmd_nvme_driver=SCAFFOLD|windows_guest=DESIGN|atlas_codegen=SKIPPED_MISSING_LOCAL_INPUT|fabric_registration=0|artifact_publication=HOLD|json=0
