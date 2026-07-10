@@ -10,6 +10,7 @@
 //! - `hookwall` — pre/post syscall hooks (Phase-2 prep + Phase-3 wiring)
 //! - `syscall` — 16-syscall canonical surface (Phase-2 Step 25)
 //! - `cosign_chain` — append-only sha-linked verdict ledger (Phase-3 Step 45)
+//! - `reflection_room` — committed explicit-artifact room head + bounded 2K gulp hierarchy
 
 #![no_std]
 #![forbid(unsafe_code)]
@@ -46,6 +47,7 @@ pub mod level_tag;
 /// is loaded at runtime (local secret file), NEVER hardcoded/committed; verb is bound into the sig.
 pub mod link_auth;
 pub mod pid;
+pub mod reflection_room;
 pub mod syscall;
 pub mod vfs;
 // Phase-2.5 cycle-72: demote was premature — kernel modules must remain present-and-callable

@@ -1,0 +1,19 @@
+# Reproducible bootable-kernel builds (trilateral R1 parity).
+#
+# The x86_64-unknown-uefi target links with lld-link (PE/COFF). By default lld-link stamps the
+# PE header with a build TimeDateStamp, so two clean builds of the same ASOLARIA_SEAT differ byte
+# for byte. `/Brepro` replaces that timestamp with a deterministic content hash, and
+# --remap-path-prefix strips the machine-specific checkout root so any-32-bit-or-64-bit absolute
+# paths embedded in panic locations normalize to a constant. Result: a clean build of a given seat
+# yields a byte-identical .efi -> stable, reproducible per-seat SHA-256 across rebuilds, and
+# identical per-seat SHA when acer/liris/relic build the same commit under CI's fixed checkout path.
+[target.x86_64-unknown-uefi]
+rustflags = [
+  # /DEBUG:NONE drops lld-link's CodeView build-id (the RSDS PDB GUID + debug-directory
+  # timestamps) — the sole remaining per-build variance once symbols are stripped. /Brepro then
+  # writes a deterministic content hash into the PE TimeDateStamp instead of wall-clock time.
+  # --remap-path-prefix normalizes any embedded checkout-relative paths.
+  "-C", "link-arg=/DEBUG:NONE",
+  "-C", "link-arg=/Brepro",
+  "--remap-path-prefix", "../=./",
+]

@@ -106,6 +106,42 @@ print_hash() {
     echo "[sha16]  ${hash:0:16}"
 }
 
+verify_artifact_markers() {
+    local path="$1"
+    # Static artifact coverage for both storage detection scaffolds/gates; this does not claim
+    # controller initialization, disk discovery, or storage I/O.
+    local required_markers=(
+        "seat=liris"
+        "device_identity=runtime-pci-60d"
+        "BOOTPID|device_pid="
+        "BOOTTIME|utc="
+        "BOOTPROJ|boot_pid="
+        "BOOTDRIVER|driver=intel-rst-vmd"
+        "BOOTDRIVER|driver=sata-ahci"
+    )
+    local forbidden_markers=(
+        "ACER-CLAUDE-FABLE5"
+        "|colony=acer|"
+    )
+
+    local marker
+    for marker in "${required_markers[@]}"; do
+        if grep -aFq -- "${marker}" "${path}"; then
+            echo "[ok] artifact marker present: ${marker}"
+        else
+            add_failure "artifact marker missing: ${marker}" 1
+        fi
+    done
+
+    for marker in "${forbidden_markers[@]}"; do
+        if grep -aFq -- "${marker}" "${path}"; then
+            add_failure "forbidden cross-seat artifact marker present: ${marker}" 1
+        else
+            echo "[ok] forbidden artifact marker absent: ${marker}"
+        fi
+    done
+}
+
 find_ovmf_code() {
     if [[ -n "${OVMF_CODE:-}" ]]; then
         if [[ -f "${OVMF_CODE}" ]]; then
@@ -235,6 +271,7 @@ run_step "cargo check -p asolaria-kernel-core --all-targets" cargo check -p asol
 run_step "cargo test -p asolaria-kernel-core --all-targets -- --test-threads=1" cargo test -p asolaria-kernel-core --all-targets -- --test-threads=1
 if run_step "cargo build --release --target ${TARGET_TRIPLE} --bin asolaria-os" cargo build --release --target "${TARGET_TRIPLE}" --bin asolaria-os; then
     if [[ -f "${TARGET_ARTIFACT}" ]]; then
+        verify_artifact_markers "${TARGET_ARTIFACT}"
         assert_not_symlink "${DIST_DIR}" "dist dir"
         mkdir -p "${DIST_DIR}"
         assert_not_symlink "${DIST_DIR}" "dist dir"

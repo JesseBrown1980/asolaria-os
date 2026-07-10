@@ -103,6 +103,48 @@ function Write-ArtifactHash {
     Write-Host "[sha16]  $($hash.Substring(0, 16))"
 }
 
+function Test-ArtifactMarkers {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        Add-Failure -Label "artifact missing: $Path" -ExitCode 1
+        return
+    }
+
+    $text = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($Path))
+    # Static artifact coverage for both storage detection scaffolds/gates; this does not claim
+    # controller initialization, disk discovery, or storage I/O.
+    $requiredMarkers = @(
+        "seat=liris",
+        "device_identity=runtime-pci-60d",
+        "BOOTPID|device_pid=",
+        "BOOTTIME|utc=",
+        "BOOTPROJ|boot_pid=",
+        "BOOTDRIVER|driver=intel-rst-vmd",
+        "BOOTDRIVER|driver=sata-ahci"
+    )
+    $forbiddenMarkers = @(
+        "ACER-CLAUDE-FABLE5",
+        "|colony=acer|"
+    )
+
+    foreach ($marker in $requiredMarkers) {
+        if ($text.Contains($marker)) {
+            Write-Host "[ok] artifact marker present: $marker"
+        } else {
+            Add-Failure -Label "artifact marker missing: $marker" -ExitCode 1
+        }
+    }
+
+    foreach ($marker in $forbiddenMarkers) {
+        if ($text.Contains($marker)) {
+            Add-Failure -Label "forbidden cross-seat artifact marker present: $marker" -ExitCode 1
+        } else {
+            Write-Host "[ok] forbidden artifact marker absent: $marker"
+        }
+    }
+}
+
 function Get-OvmfCodePath {
     if ($env:OVMF_CODE) {
         if (Test-Path -LiteralPath $env:OVMF_CODE -PathType Leaf) {
@@ -268,6 +310,7 @@ try {
     $buildOk = Invoke-Step -Label "cargo build --release --target $TargetTriple --bin asolaria-os" -FilePath "cargo" -Arguments @("build", "--release", "--target", $TargetTriple, "--bin", "asolaria-os")
 
     if ($buildOk) {
+        Test-ArtifactMarkers -Path $TargetArtifact
         $copyOk = Copy-DistArtifact
         Write-ArtifactHash -Path $TargetArtifact
         if ($copyOk) {
