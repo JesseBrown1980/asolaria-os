@@ -112,13 +112,16 @@ function Test-ArtifactMarkers {
     }
 
     $text = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($Path))
+    # Static artifact coverage for both storage detection scaffolds/gates; this does not claim
+    # controller initialization, disk discovery, or storage I/O.
     $requiredMarkers = @(
         "seat=liris",
         "device_identity=runtime-pci-60d",
         "BOOTPID|device_pid=",
         "BOOTTIME|utc=",
         "BOOTPROJ|boot_pid=",
-        "BOOTDRIVER|driver=intel-rst-vmd"
+        "BOOTDRIVER|driver=intel-rst-vmd",
+        "BOOTDRIVER|driver=sata-ahci"
     )
     $forbiddenMarkers = @(
         "ACER-CLAUDE-FABLE5",

@@ -1,15 +1,16 @@
 //! Trilateral build seat selector.
 //!
 //! The Asolaria OS is ONE shared source with ONE shared driver set. Each federation machine
-//! (acer / liris / <third>, and later any auto-provisioned node) gets its OWN kernel that is
-//! device-specific, PID-specific, and fabric-specific. Only the *seat label* is a build-time
+//! (acer / liris / relic, and later any auto-provisioned node) gets its OWN kernel that is
+//! device-specific, PID-specific, and fabric-specific. Relic is OP-FELIPE's computer;
+//! OP-FELIPE is a human operator, not a machine or seat. Only the *seat label* is a build-time
 //! parameter here — the device identity itself is NOT baked in: the kernel mints `device_pid`
 //! at boot from the live read-only PCI inventory + RTC/TSC (see `boot/src/hwinv.rs`).
 //!
 //! Usage (the trilateral GitHub build runs this three times):
 //!   ASOLARIA_SEAT=acer  cargo build --release --target x86_64-unknown-uefi --bin asolaria-os
 //!   ASOLARIA_SEAT=liris cargo build ...
-//!   ASOLARIA_SEAT=felipe cargo build ...
+//!   ASOLARIA_SEAT=relic cargo build ...
 //! Unset defaults to `liris` (this clone's seat).
 
 use std::env;
