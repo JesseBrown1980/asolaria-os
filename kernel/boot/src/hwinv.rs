@@ -1,7 +1,7 @@
 //! Early-boot PCI hardware inventory + device_pid mint · pre-driver metal-readiness.
 //!
 //! Enumerates the PCI configuration space via the legacy 0xCF8/0xCFC port-I/O
-//! mechanism, prints every present device (vendor:device + class:subclass) over
+//! mechanism, prints every present device (vendor:device + class:subclass:prog-if) over
 //! COM1 serial, and mints a **hardware-specific, PID-specific `device_pid`** from the
 //! enumeration: `device_pid = sha256(project_60d(canonical hardware tuple))[..8]` (the
 //! 8-byte Host8 handle), with full 60D-coordinate and raw-tuple SHA-256 proofs. On a
@@ -105,7 +105,7 @@ struct HwTuple {
     len: usize,
     count: u32,
     rst_vmd: bool, // Intel RST/VMD controller 8086:282A present (acer/liris storage path)
-    ahci: bool,    // SATA AHCI controller (class 0x01:0x06) present (relic storage path)
+    ahci: bool,    // SATA AHCI controller (class 0x01:0x06, prog-if 0x01) present
     storage: bool, // any PCI class 0x01 (mass storage) present
 }
 
@@ -120,7 +120,7 @@ impl HwTuple {
             storage: false,
         }
     }
-    fn push(&mut self, vendor: u16, device: u16, class: u8, subclass: u8) {
+    fn push(&mut self, vendor: u16, device: u16, class: u8, subclass: u8, prog_if: u8) {
         let b = [
             (vendor >> 8) as u8,
             (vendor & 0xFF) as u8,
@@ -137,10 +137,11 @@ impl HwTuple {
         if vendor == 0x8086 && device == 0x282A {
             self.rst_vmd = true;
         }
-        // SATA AHCI controller (mass-storage class 0x01, subclass 0x06). This is relic's storage
-        // path (e.g. 8086:1E03) — distinct from acer/liris's RST/VMD bridge. Both driver scaffolds
-        // ship in the shared kernel; the boot selects the applicable one from live PCI presence.
-        if class == 0x01 && subclass == 0x06 {
+        // SATA controller in the AHCI 1.0 programming interface (mass-storage class 0x01,
+        // subclass 0x06, prog-if 0x01). This is relic's storage-intent gate (e.g. 8086:1E03),
+        // distinct from acer/liris's RST/VMD gate. Both remain scaffolds; this proves only the
+        // live PCI match, not controller initialization or storage I/O.
+        if class == 0x01 && subclass == 0x06 && prog_if == 0x01 {
             self.ahci = true;
         }
         if class == 0x01 {
@@ -366,8 +367,9 @@ pub unsafe fn pci_scan(seat: &[u8]) -> HwSummary {
                 let class_reg = cfg_read32(bus, dev, func, 0x08);
                 let class = ((class_reg >> 24) & 0xFF) as u8;
                 let subclass = ((class_reg >> 16) & 0xFF) as u8;
+                let prog_if = ((class_reg >> 8) & 0xFF) as u8;
 
-                // "  PCI bb:dd.f  vvvv:dddd class=cc:ss\r\n"
+                // "  PCI bb:dd.f  vvvv:dddd class=cc:ss:pp\r\n"
                 let mut line = [0u8; 48];
                 let mut i = put_bytes(&mut line, 0, b"  PCI ");
                 i = put_hex8(&mut line, i, bus);
@@ -388,10 +390,13 @@ pub unsafe fn pci_scan(seat: &[u8]) -> HwSummary {
                 line[i] = b':';
                 i += 1;
                 i = put_hex8(&mut line, i, subclass);
+                line[i] = b':';
+                i += 1;
+                i = put_hex8(&mut line, i, prog_if);
                 i = put_bytes(&mut line, i, b"\r\n");
                 serial_print(&line[..i]);
 
-                tuple.push(vendor, device, class, subclass);
+                tuple.push(vendor, device, class, subclass, prog_if);
                 if tuple.count >= 64 {
                     serial_print(b"  hwinv . (capped at 64 device-functions)\r\n");
                     let device_digest = emit_device_pid(&tuple, seat);

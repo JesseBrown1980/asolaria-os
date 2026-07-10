@@ -1,0 +1,11 @@
+RELICQEMUHDR|schema=ASOLARIA-RELIC-QEMU-BOOT-VERIFY-V1|seat=relic|operator=OP-FELIPE|operator_pid=UNRECORDED|measured_at=2026-07-10T19:40:21Z|kind=branch-head-ci-artifact-emulated-boot|supersedes_qemu_state=RELIC-TRILATERAL-KERNEL-VERIFY-20260710|json=0
+RELICQEMUBASE|repo=JesseBrown1980/asolaria-os|branch=relic/verify-prewindows-metal-20260710|commit=a54c4f158857b3a5fdc581ac9abae1b04c953385|ci_run=29118629857|ci_conclusion=SUCCESS|relic_artifact_id=8237629866|target=x86_64-unknown-uefi|json=0
+RELICQEMUARTIFACT|name=asolaria-os-relic.efi|bytes=25088|sha256=803a9dfdae60b040e873657e69c51bc61cdc4424597391c108f169601ec4fe1a|same_job_clean_rebuild_cmp=PASS|seat_marker=relic|cross_seat_leak=ABSENT|json=0
+RELICQEMUENV|qemu=11.0.50|machine=q35|accel=tcg|memory_mib=512|firmware=edk2-x86_64-code.fd-readonly|network=none|physical_disks=none|usb_passthrough=none|persistent_vars=none|timebox_seconds=25|termination=TIMEBOX|json=0
+RELICQEMUSEAT|evidence=BUILD_TIME_SEAT_CONTEXT|source=uefi|seat=relic|device_identity=runtime-pci-60d|boot_identity=runtime-rtc-tsc|authority=unsealed|e=0|fire=0|json=0
+RELICQEMUPID|device_pid=febc442c619ef0a0|device_pid_full=febc442c619ef0a01f6998e2f643ae5e536d83e01ba0fd0c91380a723c93816d|hw_tuple_pid_full=cd7fd8b733795331a3d6c315d6148a3110c3177e2b4438082cee3017b38d9ce2|hw_devices=5|rst_vmd=0|ahci=1|storage=1|seat=relic|source=QEMU_EMULATED_HARDWARE|json=0
+RELICQEMUBOOTPROJ|boot_pid=52dd18c53823f886|device_pid=febc442c619ef0a0|utc=2026-07-10T19:40:21Z|volatile=1|stable_ref=device_pid|source=QEMU_EMULATION|json=0
+RELICQEMUDRIVER|driver=intel-rst-vmd|match=8086:282A|status=NOT_APPLICABLE|reason=no_8086:282A_on_emulated_device|writes_field=0|phase=SCAFFOLD_ONLY|json=0
+RELICQEMUDRIVER|driver=sata-ahci|match=class01:06:01|status=GATED_MATCH|ahci_bringup=TODO_next_step|writes_field=0|phase=SCAFFOLD_ONLY|json=0
+RELICQEMUSERIAL|file=RELIC-QEMU-BOOT-SERIAL-A54C4F1-20260710.log|sha256=b6744ab0acc556ff16f2ea95f978de683ee47ac4d4ddb53aa6a5cdc726b22212|capture=COM1|json=0
+RELICQEMUBOUNDARY|relic_metal_boot=UNVERIFIED|metal_device_pid=UNMINTED|hp_8086:1E03_detection=UNVERIFIED_ON_METAL|ahci_initialization=UNIMPLEMENTED|disk_enumeration=UNIMPLEMENTED|sector_io=UNIMPLEMENTED|writes_zero_field=STATIC_NOT_RUNTIME_INSTRUMENTATION|disk_write=0|usb_write=0|efi_variable_write=0|e=0|fire=0|json=0

@@ -108,6 +108,8 @@ print_hash() {
 
 verify_artifact_markers() {
     local path="$1"
+    # Static artifact coverage for both storage detection scaffolds/gates; this does not claim
+    # controller initialization, disk discovery, or storage I/O.
     local required_markers=(
         "seat=liris"
         "device_identity=runtime-pci-60d"
@@ -115,6 +117,7 @@ verify_artifact_markers() {
         "BOOTTIME|utc="
         "BOOTPROJ|boot_pid="
         "BOOTDRIVER|driver=intel-rst-vmd"
+        "BOOTDRIVER|driver=sata-ahci"
     )
     local forbidden_markers=(
         "ACER-CLAUDE-FABLE5"

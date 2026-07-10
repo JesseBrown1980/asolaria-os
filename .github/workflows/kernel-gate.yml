@@ -3,9 +3,6 @@ name: kernel gate
 on:
   pull_request:
   push:
-    branches:
-      - main
-      - liris-kernel-ci-professional-gate-20260708
 
 jobs:
   kernel-gate:
@@ -36,7 +33,8 @@ jobs:
   #
   # x86 seats: acer + liris (Intel RST/VMD 8086:282A storage) and relic (HP 1000, SATA AHCI
   # 8086:1E03 — no 282A). The shared driver set carries BOTH storage paths; each boot selects the
-  # applicable one from live PCI. (felipe is the Galaxy A06 ARM64 node, not an x86 seat.)
+  # applicable one from live PCI. OP-FELIPE is the human operator who owns relic, not a machine
+  # or seat.
   trilateral-build:
     runs-on: ubuntu-latest
     strategy:
@@ -55,14 +53,29 @@ jobs:
           export CARGO_BUILD_JOBS=1
           ASOLARIA_SEAT=${{ matrix.seat }} cargo build --release --target x86_64-unknown-uefi --bin asolaria-os
           mkdir -p dist
-          cp target/x86_64-unknown-uefi/release/asolaria-os.efi dist/asolaria-os-${{ matrix.seat }}.efi
+          FIRST=dist/asolaria-os-${{ matrix.seat }}.first.efi
+          CANONICAL=dist/asolaria-os-${{ matrix.seat }}.efi
+          cp target/x86_64-unknown-uefi/release/asolaria-os.efi "$FIRST"
+          rm -rf target/x86_64-unknown-uefi/release
+          ASOLARIA_SEAT=${{ matrix.seat }} cargo build --release --target x86_64-unknown-uefi --bin asolaria-os
+          cp target/x86_64-unknown-uefi/release/asolaria-os.efi "$CANONICAL"
+          cmp -s "$FIRST" "$CANONICAL" || {
+            echo "FAIL: ${{ matrix.seat }} EFI is not reproducible across clean target rebuilds"
+            sha256sum "$FIRST" "$CANONICAL"
+            exit 1
+          }
+          rm -f "$FIRST"
       - name: Verify seat marker + shared device path (no cross-seat leak)
         run: |
           cd kernel
           EFI=dist/asolaria-os-${{ matrix.seat }}.efi
           strings -a "$EFI" | grep -Fq "|seat=${{ matrix.seat }}|device_identity=runtime-pci-60d" \
             || { echo "FAIL: ${{ matrix.seat }} EFI missing its own seat marker + shared device path"; exit 1; }
-          for other in acer liris felipe; do
+          strings -a "$EFI" | grep -Fq "BOOTDRIVER|driver=intel-rst-vmd" \
+            || { echo "FAIL: ${{ matrix.seat }} EFI missing intel-rst-vmd driver marker"; exit 1; }
+          strings -a "$EFI" | grep -Fq "BOOTDRIVER|driver=sata-ahci" \
+            || { echo "FAIL: ${{ matrix.seat }} EFI missing sata-ahci driver marker"; exit 1; }
+          for other in acer liris relic; do
             if [ "$other" != "${{ matrix.seat }}" ]; then
               strings -a "$EFI" | grep -Fq "evidence=BUILD_TIME_SEAT_CONTEXT|source=uefi|seat=$other|" \
                 && { echo "FAIL: cross-seat leak — $other marker in ${{ matrix.seat }} EFI"; exit 1; }

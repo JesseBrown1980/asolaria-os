@@ -21,7 +21,7 @@ pub(crate) fn probe(hw: &HwSummary, boot_pid: &[u8; 8], bt: &BootTime, seat: &[u
     let mut i = put_bytes(
         &mut row,
         0,
-        b"  BOOTDRIVER|driver=sata-ahci|match=class01:06|device_pid=",
+        b"  BOOTDRIVER|driver=sata-ahci|match=class01:06:01|device_pid=",
     );
     for &b in &hw.device_digest[..8] {
         i = put_hex8(&mut row, i, b);
