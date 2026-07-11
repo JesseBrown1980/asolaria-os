@@ -87,3 +87,40 @@ jobs:
           name: asolaria-os-${{ matrix.seat }}-efi
           path: kernel/dist/asolaria-os-${{ matrix.seat }}.efi
           if-no-files-found: error
+
+  # Checked pre-Windows handoff path (ASOLARIA_BOOT_MODE=pre-windows). Builds each seat in handoff
+  # mode and asserts the honest semantics: the mode/handoff rows are present, and the FORBIDDEN
+  # over-claim `next=windows-boot-manager` is absent (the successor is firmware-defined; relic's
+  # QEMU showed the EDK2 shell, not Windows). This closes the mode-specific CI gap acer/relic flagged.
+  prewindows-handoff:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        seat: [acer, liris, relic]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust 1.81 kernel toolchain
+        run: |
+          rustup toolchain install 1.81 --profile minimal --target x86_64-unknown-uefi
+          cd kernel && rustc --version
+      - name: Build ${{ matrix.seat }} pre-windows handoff
+        run: |
+          cd kernel
+          export CARGO_BUILD_JOBS=1
+          ASOLARIA_SEAT=${{ matrix.seat }} ASOLARIA_BOOT_MODE=pre-windows cargo build --release --target x86_64-unknown-uefi --bin asolaria-os
+      - name: Assert honest handoff semantics (present rows + forbidden over-claim absent)
+        run: |
+          cd kernel
+          EFI=target/x86_64-unknown-uefi/release/asolaria-os.efi
+          strings -a "$EFI" | grep -Fq "mode=pre-windows|handoff_return=true" \
+            || { echo "FAIL: ${{ matrix.seat }} missing pre-windows handoff mode row"; exit 1; }
+          strings -a "$EFI" | grep -Fq "ASOBTHANDOFF|format=hbpish" \
+            || { echo "FAIL: ${{ matrix.seat }} missing ASOBTHANDOFF row"; exit 1; }
+          strings -a "$EFI" | grep -Fq "next=firmware-defined" \
+            || { echo "FAIL: ${{ matrix.seat }} handoff must state next=firmware-defined"; exit 1; }
+          # FORBIDDEN over-claim: the kernel cannot know the successor is Windows.
+          if strings -a "$EFI" | grep -Fq "next=windows-boot-manager"; then
+            echo "FAIL: ${{ matrix.seat }} emits forbidden over-claim next=windows-boot-manager"; exit 1
+          fi
+          echo "OK: ${{ matrix.seat }} pre-windows handoff semantics honest (next=firmware-defined, no windows over-claim)"
