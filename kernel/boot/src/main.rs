@@ -421,6 +421,25 @@ pub extern "efiapi" fn efi_main(
         let boot_pid = bootproj::emit(&hw.device_digest, &boot_time);
         driver_rst_vmd::probe(&hw, &boot_pid, &boot_time, BOOT_SEAT);
         driver_ahci::probe(&hw, &boot_pid, &boot_time, BOOT_SEAT);
+        serial_print(BOOT_MODE_ROW);
+        serial_print(b"\r\n");
+        uefi_print(system_table, BOOT_MODE_ROW);
+        uefi_print(system_table, b"\r\n");
+
+        // Finite pre-Windows handoff (OP-JESSE canon: boot from the local internal drive BEFORE
+        // Windows, then hand back). The identity rows are already emitted above; return
+        // EFI_NOT_FOUND so the firmware boot manager continues to the next BootOrder entry (Windows
+        // Boot Manager). Boot services are still live (no ExitBootServices), so returning is clean.
+        // The default "kernel" mode falls through to init::run() below and takes over the machine.
+        if BOOT_PRE_WINDOWS_HANDOFF {
+            serial_print(b"  ASOBTHANDOFF|format=hbpish|evidence=MEASURED_BOOT|source=uefi|target=firmware-next-boot-option|next=windows-boot-manager|status=returning|writes=0|e=0|fire=0|json=0\r\n");
+            uefi_print(
+                system_table,
+                b"  ASOBTHANDOFF|target=firmware-next-boot-option|status=returning|e=0|fire=0\r\n",
+            );
+            // EFI_NOT_FOUND = high bit set | 14 — tells the firmware to try the next boot option.
+            return (1usize << (usize::BITS - 1)) | 14usize;
+        }
     }
     let _anchor = asolaria_kernel_core::FEDERATION_ANCHOR_PID;
     unsafe {
