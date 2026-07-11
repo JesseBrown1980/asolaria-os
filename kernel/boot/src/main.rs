@@ -428,14 +428,16 @@ pub extern "efiapi" fn efi_main(
 
         // Finite pre-Windows handoff (OP-JESSE canon: boot from the local internal drive BEFORE
         // Windows, then hand back). The identity rows are already emitted above; return
-        // EFI_NOT_FOUND so the firmware boot manager continues to the next BootOrder entry (Windows
-        // Boot Manager). Boot services are still live (no ExitBootServices), so returning is clean.
-        // The default "kernel" mode falls through to init::run() below and takes over the machine.
+        // EFI_NOT_FOUND so the firmware boot manager tries the NEXT BootOrder entry. That successor
+        // is FIRMWARE-DEFINED — often Windows Boot Manager, but not guaranteed (relic's QEMU showed
+        // the EDK2 Internal Shell when no Windows entry existed). Boot services are still live (no
+        // ExitBootServices), so returning is clean — but Asolaria STOPS here; it is NOT resident and
+        // does not supervise the successor. The default "kernel" mode falls through to init::run().
         if BOOT_PRE_WINDOWS_HANDOFF {
-            serial_print(b"  ASOBTHANDOFF|format=hbpish|evidence=MEASURED_BOOT|source=uefi|target=firmware-next-boot-option|next=windows-boot-manager|status=returning|writes=0|e=0|fire=0|json=0\r\n");
+            serial_print(b"  ASOBTHANDOFF|format=hbpish|evidence=MEASURED_BOOT|source=uefi|target=firmware-next-boot-option|next=firmware-defined|windows=UNVERIFIED|resident_supervision=0|status=returning|writes=0|e=0|fire=0|json=0\r\n");
             uefi_print(
                 system_table,
-                b"  ASOBTHANDOFF|target=firmware-next-boot-option|status=returning|e=0|fire=0\r\n",
+                b"  ASOBTHANDOFF|target=firmware-next-boot-option|next=firmware-defined|resident_supervision=0|status=returning|e=0|fire=0\r\n",
             );
             // EFI_NOT_FOUND = high bit set | 14 — tells the firmware to try the next boot option.
             return (1usize << (usize::BITS - 1)) | 14usize;

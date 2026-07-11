@@ -56,8 +56,10 @@ fn main() {
         "ASOBTID|format=hbpish|evidence=BUILD_TIME_SEAT_CONTEXT|source=uefi|seat={seat}|device_identity=runtime-pci-60d|boot_identity=runtime-rtc-tsc|authority=unsealed|e=0|fire=0|json=0"
     );
 
+    // handoff_return=true means the pre-windows stage returns to firmware (EFI_NOT_FOUND); the
+    // successor is firmware-defined (not necessarily Windows), and Asolaria is not resident.
     let boot_mode_row = format!(
-        "ASOBTMODE|format=hbpish|evidence=BUILD_TIME_BOOT_MODE|source=uefi|seat={seat}|mode={boot_mode}|handoff_windows={pre_windows_handoff}|authority=operator-configured|e=0|fire=0|json=0"
+        "ASOBTMODE|format=hbpish|evidence=BUILD_TIME_BOOT_MODE|source=uefi|seat={seat}|mode={boot_mode}|handoff_return={pre_windows_handoff}|next=firmware-defined|resident_supervision=0|authority=operator-configured|e=0|fire=0|json=0"
     );
 
     let generated = format!(
