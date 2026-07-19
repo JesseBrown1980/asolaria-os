@@ -47,6 +47,9 @@ pub mod level_tag;
 /// is loaded at runtime (local secret file), NEVER hardcoded/committed; verb is bound into the sig.
 pub mod link_auth;
 pub mod pid;
+/// MTP watcher trio (MTP1 pixel / MTP2 shell / MTP3 cylinder) — reconstruct-then-reproject
+/// consistency gate; emits Measured only if all three agree and CRT capacity is sufficient.
+pub mod mtp;
 pub mod reflection_room;
 pub mod syscall;
 pub mod vfs;
