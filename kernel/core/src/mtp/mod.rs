@@ -223,7 +223,10 @@ mod tests {
         b.cylinders = vec![(33554393, 7)]; // one ~25-bit cylinder cannot cover 48 bits
         let w = b.clone();
         let r = watcher_gate(&b, &w, 48);
-        assert_eq!(r.verdict, MtpVerdict::Held(MtpHold::InsufficientJointCapacity));
+        assert_eq!(
+            r.verdict,
+            MtpVerdict::Held(MtpHold::InsufficientJointCapacity)
+        );
         assert!(!r.joint_capacity_ok);
     }
 
