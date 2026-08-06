@@ -60,7 +60,7 @@ The engines are already public: **[asolaria-federation-1024](https://github.com/
 
 ## Requirements
 
-- Rust ≥ 1.75 (`rustup`). Zero other dependencies — `cargo build` works fully offline.
+- Rust ≥ 1.81 (`rustup`). Zero other dependencies — `cargo build` works fully offline.
 - Linux, macOS, or Windows. Cross-compiles to a Linux target for bare-metal Asolaria-on-metal.
 
 ## License
