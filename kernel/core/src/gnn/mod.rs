@@ -54,7 +54,9 @@ pub enum RoutingDecision {
 #[derive(Debug, Clone)]
 pub struct RankedItem {
     pub item_id: String,
-    pub score: f32,
+    /// Rank score in MICRO units (integer only; 1_000_000 = full score).
+    /// Ordering is identical to the previous fractional score.
+    pub score_micro: u32,
 }
 
 /// Verdict-aggregator output from GNN.
@@ -81,7 +83,7 @@ pub fn top_n_deterministic_fallback(items: &[String], n: usize) -> Vec<RankedIte
         .enumerate()
         .map(|(i, id)| RankedItem {
             item_id: id.clone(),
-            score: 1.0 - (i as f32) * 0.001,
+            score_micro: 1_000_000 - (i as u32) * 1_000,
         })
         .collect()
 }
@@ -202,6 +204,6 @@ mod tests {
         let ranked = top_n_deterministic_fallback(&items, 3);
         assert_eq!(ranked.len(), 3);
         assert_eq!(ranked[0].item_id, "a");
-        assert!(ranked[0].score > ranked[1].score);
+        assert!(ranked[0].score_micro > ranked[1].score_micro);
     }
 }
