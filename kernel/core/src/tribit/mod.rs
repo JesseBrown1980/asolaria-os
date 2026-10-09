@@ -367,9 +367,13 @@ pub fn unprism(x: &[u64; K]) -> [u64; K] {
 pub const fn pump_shell(energy: u64) -> u32 {
     let mut shell = 0u32;
     let mut rung = 1u64;
-    while rung <= energy && shell < 40 {
-        rung *= 3;
+    while rung <= energy {
         shell += 1;
+        // Count the last representable rung without overflowing on the next multiply.
+        if rung > u64::MAX / 3 {
+            break;
+        }
+        rung *= 3;
     }
     shell
 }
