@@ -46,9 +46,13 @@ pub mod level_tag;
 /// Cross-host/colony link auth — shared-secret HMAC + owner-human-PID consent gate. The key value
 /// is loaded at runtime (local secret file), NEVER hardcoded/committed; verb is bound into the sig.
 pub mod link_auth;
+/// MTP watcher trio (MTP1 pixel / MTP2 shell / MTP3 cylinder) — reconstruct-then-reproject
+/// consistency gate; emits Measured only if all three agree and CRT capacity is sufficient.
+pub mod mtp;
 pub mod pid;
 pub mod reflection_room;
 pub mod syscall;
+pub mod tribit;
 pub mod vfs;
 // Phase-2.5 cycle-72: demote was premature — kernel modules must remain present-and-callable
 // until Syscall-IPC-Rewire converts each call site to envelope RPC. Servers/* mirrors at
