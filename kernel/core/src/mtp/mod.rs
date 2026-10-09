@@ -111,23 +111,53 @@ pub fn mtp3_cylinder(black: &Signature, white: &Signature) -> bool {
     black.cylinders == white.cylinders
 }
 
-/// MTP3 capacity — the selected pairwise-coprime cylinders jointly cover `2^range_bits`.
-/// Returns false (→ hold) if the product of primes is below the range, i.e. the shadows
-/// are individually non-injective and jointly still ambiguous. Overflow-safe: it works in
-/// log2 space so 128-bit products never wrap.
+/// MTP3 capacity — selected pairwise-coprime moduli must cover `2^range_bits`.
+/// Returns false for a zero modulus or overlapping moduli, since either invalidates the
+/// CRT uniqueness bound. The product is accumulated as little-endian u64 limbs so the
+/// comparison stays exact without a fixed-width overflow.
 pub fn mtp3_joint_capacity(cylinders: &[(u64, u64)], range_bits: u32) -> bool {
-    let mut bits: u32 = 0;
-    for &(p, _r) in cylinders {
-        if p <= 1 {
+    fn gcd(mut a: u64, mut b: u64) -> u64 {
+        while b != 0 {
+            let rem = a % b;
+            a = b;
+            b = rem;
+        }
+        a
+    }
+
+    fn bit_len(limbs: &[u64]) -> u64 {
+        let top = limbs[limbs.len() - 1];
+        (limbs.len() as u64 - 1) * 64 + u64::from(64 - top.leading_zeros())
+    }
+
+    let mut product = alloc::vec![1u64];
+    for (i, &(p, _r)) in cylinders.iter().enumerate() {
+        if p == 0 {
+            return false;
+        }
+        if p == 1 {
             continue;
         }
-        // floor(log2(p)) + 1 == number of bits; sum is a safe lower bound on log2(prod)
-        bits = bits.saturating_add(64 - (p - 1).leading_zeros());
-        if bits >= range_bits {
+        for &(previous, _) in &cylinders[..i] {
+            if previous > 1 && gcd(p, previous) != 1 {
+                return false;
+            }
+        }
+
+        let mut carry = 0u128;
+        for limb in product.iter_mut() {
+            let value = u128::from(*limb) * u128::from(p) + carry;
+            *limb = value as u64;
+            carry = value >> 64;
+        }
+        if carry != 0 {
+            product.push(carry as u64);
+        }
+        if bit_len(&product) > u64::from(range_bits) {
             return true;
         }
     }
-    bits >= range_bits
+    bit_len(&product) > u64::from(range_bits)
 }
 
 /// The watcher gate: emit `Verified` only if the joint capacity is sufficient AND all
